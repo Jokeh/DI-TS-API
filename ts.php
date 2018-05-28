@@ -10,11 +10,10 @@ $clientDBInfo = $ts3->clientGetByName($user)->getInfo();
 
 //var_dump($clientDBInfo);
 //vars
-$idleTime = $clientDBInfo['client_idle_time']/1000;
+$idleTime = $clientDBInfo['connection_connected_time']/1000;
 $lastConnected = $clientDBInfo['client_lastconnected'];
 $nickname = $clientDBInfo['client_nickname'];
 $totalConnections = $clientDBInfo['client_totalconnections'];
-$channel = $clientDBInfo->cid;
 
 //last connected time.
 echo 'Last Connected: ' . gmdate("Y-m-d\ H:i:s\ ", $lastConnected) . PHP_EOL;
@@ -50,14 +49,21 @@ $findUser = $odb -> prepare("SELECT COUNT(*) FROM `teamspeak` WHERE `UniqueID` =
 $findUser -> execute(array(':username' => $user));
 $findUser = $findUser -> fetchColumn(0);
 
+$findTime = $odb -> prepare("SELECT `Time` FROM `teamspeak` WHERE `UniqueID` = :username");
+$findTime -> execute(array(':username' => $user));
+$findTime = $findTime -> fetchColumn(0);
+
+echo $findTime;
+$time = $findTime + $timePerCredit;
+
 if($findUser == 0 && $idleTime >= $timePerCredit && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
   $addUser = $odb->prepare("INSERT INTO `teamspeak` (`UniqueID`,`Credits`,`Time`) VALUES (:ID, :credits, :idletime);");
   $addUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":idletime" => $idleTime));
   //$logAddr = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + 1 WHERE `UniqueID` = :ID;");
   //$logAddr->execute(array( ":ID" => $user));
-}else if(!($findUser == 0) && $idleTime >= $timePerCredit && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
-  $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + :credits WHERE `UniqueID` = :ID;");
-  $updateUser->execute(array( ":ID" => $user, ":credits" => $creditsPer));
+}else if(!($findUser == 0) && $idleTime >= $timePerCredit && $idleTime >= $time && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
+  $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + :credits, `Time` = :newTime WHERE `UniqueID` = :ID;");
+  $updateUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":newTime" => $idleTime));
 }
 
 }catch(TeamSpeak3_Adapter_ServerQuery_Exception $e)

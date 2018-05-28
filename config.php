@@ -10,11 +10,23 @@ define('DBPASS','');
 define('DBNAME','di');
 
 //config
-$timePerCredit = 200;
+$timePerCredit = 300;
+//0 = yes 1 = no
 $micRequired = 0;
+//0 = yes 1 = no
 $soundRequired = 0;
-$CreditsPer = 0.25;
+//credits per $timePerCredit
+$creditsPer = 1;
 
+
+
+
+
+
+
+
+
+//Database connection shit xD kappa blaze meme 420
 $odb = new PDO("mysql:host=".DBHOST.";port=3306;dbname=".DBNAME, DBUSER, DBPASS);
 $odb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
