@@ -72,7 +72,7 @@ if($findUser == 0 && $onlineTime >= $timePerCredit && $clientDBInfo['client_outp
 }else if(!($findUser == 0) && $onlineTime >= $timePerCredit && $onlineTime >= $time && $findIdle <= $noCredits && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
   $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + :credits, `Time` = :newTime, `Idle` = :idle WHERE `UniqueID` = :ID;");
   $updateUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":newTime" => $onlineTime, ":idle" => $idleTime));
-}else if(!($findUser == 0) && $findIdle >= $noCredits ){
+}else{
   $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Idle` = :idle WHERE `UniqueID` = :ID;");
   $updateUser->execute(array( ":ID" => $user, ":idle" => $idleTime));
 }
@@ -82,6 +82,6 @@ if($findUser == 0 && $onlineTime >= $timePerCredit && $clientDBInfo['client_outp
     // catch error if client was not found on the server
     echo "User offline";
     //reset timer
-    $resetTime = $odb->prepare("UPDATE `teamspeak` SET `Time` = 0 WHERE `UniqueID` = :ID;");
+    $resetTime = $odb->prepare("UPDATE `teamspeak` SET `Time` = 0, `Idle` = 0 WHERE `UniqueID` = :ID;");
     $resetTime->execute(array( ":ID" => $user));
 }
