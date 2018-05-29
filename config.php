@@ -10,13 +10,15 @@ define('DBPASS','');
 define('DBNAME','di');
 
 //config
-$timePerCredit = 300;
+$timePerCredit = 60;
 //0 = yes 1 = no
 $micRequired = 0;
 //0 = yes 1 = no
 $soundRequired = 0;
 //credits per $timePerCredit
 $creditsPer = 1;
+//Don't give credits after idle timer
+$noCredits = 1800;
 
 
 

@@ -10,7 +10,8 @@ $clientDBInfo = $ts3->clientGetByName($user)->getInfo();
 
 //var_dump($clientDBInfo);
 //vars
-$idleTime = $clientDBInfo['connection_connected_time']/1000;
+$onlineTime = $clientDBInfo['connection_connected_time']/1000;
+$idleTime = $clientDBInfo['client_idle_time']/1000;
 $lastConnected = $clientDBInfo['client_lastconnected'];
 $nickname = $clientDBInfo['client_nickname'];
 $totalConnections = $clientDBInfo['client_totalconnections'];
@@ -23,6 +24,9 @@ echo '<br>Nickname: ' . $nickname;
 
 //Total Connections to server
 echo '<br>Total connections: ' . $totalConnections;
+
+//Online Time
+echo '<br>Online Time: ' . $onlineTime;
 
 //Idle Time
 echo '<br>Idle Time: ' . $idleTime;
@@ -53,17 +57,24 @@ $findTime = $odb -> prepare("SELECT `Time` FROM `teamspeak` WHERE `UniqueID` = :
 $findTime -> execute(array(':username' => $user));
 $findTime = $findTime -> fetchColumn(0);
 
-echo $findTime;
+$findIdle = $odb -> prepare("SELECT `Idle` FROM `teamspeak` WHERE `UniqueID` = :username");
+$findIdle -> execute(array(':username' => $user));
+$findIdle = $findIdle -> fetchColumn(0);
+
+//echo $findTime;
 $time = $findTime + $timePerCredit;
 
-if($findUser == 0 && $idleTime >= $timePerCredit && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
-  $addUser = $odb->prepare("INSERT INTO `teamspeak` (`UniqueID`,`Credits`,`Time`) VALUES (:ID, :credits, :idletime);");
-  $addUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":idletime" => $idleTime));
+if($findUser == 0 && $onlineTime >= $timePerCredit && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
+  $addUser = $odb->prepare("INSERT INTO `teamspeak` (`UniqueID`,`Credits`,`Time`,`Idle`) VALUES (:ID, :credits, :onlinetime, :idle);");
+  $addUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":onlinetime" => $onlineTime, ":idle" => $idleTime));
   //$logAddr = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + 1 WHERE `UniqueID` = :ID;");
   //$logAddr->execute(array( ":ID" => $user));
-}else if(!($findUser == 0) && $idleTime >= $timePerCredit && $idleTime >= $time && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
-  $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + :credits, `Time` = :newTime WHERE `UniqueID` = :ID;");
-  $updateUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":newTime" => $idleTime));
+}else if(!($findUser == 0) && $onlineTime >= $timePerCredit && $onlineTime >= $time && $findIdle <= $noCredits && $clientDBInfo['client_output_muted'] == $soundRequired && $clientDBInfo['client_input_muted'] == $micRequired){
+  $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Credits` = Credits + :credits, `Time` = :newTime, `Idle` = :idle WHERE `UniqueID` = :ID;");
+  $updateUser->execute(array( ":ID" => $user, ":credits" => $creditsPer, ":newTime" => $onlineTime, ":idle" => $idleTime));
+}else if(!($findUser == 0) && $findIdle >= $noCredits ){
+  $updateUser = $odb->prepare("UPDATE `teamspeak` SET `Idle` = :idle WHERE `UniqueID` = :ID;");
+  $updateUser->execute(array( ":ID" => $user, ":idle" => $idleTime));
 }
 
 }catch(TeamSpeak3_Adapter_ServerQuery_Exception $e)
